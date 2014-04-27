@@ -3,33 +3,56 @@
 int main(void) {
 	pid_t pid;
 	
-	char cm[50];
-	char* rea[1];
+	
 while (1){
 	
 	printf("myshell1 ");
-	//fgets(cm, 49, stdin);
-	//cm[49] = 0;
-	scanf("%s", &cm);
-	rea[0] = cm;
+	
+	char cmdline[MAXC];
+	char *pch;
+	char *pch1[1];
+	int cnt=0;
+  
+	fgets(cmdline, 1001, stdin);
+	//cmdline[1000]=0;
+	/*
+	pch = strtok (cmdline," \t\n");
+	while (pch != NULL)
+	{
+		strcpy(pch1[cnt], pch);
+		printf("%d: %s", cnt, pch1[cnt]);
+		pch = strtok (NULL, " \t\n");
+		cnt++;
+	}
+	char *cmdls;
+	cmdls = pch1[0];*/
 	switch(pid = fork()) {
 	case -1:
 		perror("fork"); /* something went wrong */
 		exit(1); /* parent exits */
 	case 0:
+		pch = strtok (cmdline," \t\n");
+		while (pch != NULL)
+		{
+			strcpy(pch1[cnt], pch);
+			printf("%d: %s", cnt, pch1[cnt]);
+			pch = strtok (NULL, " \t\n");
+			cnt++;
+		}
+		char *cmdls;
+		cmdls = pch1[0];
 	
+		if (pch1[1] != NULL){
+			printf(" CHILD: My PID is %d\n", getpid());
+			printf(" CHILD: unknown command\n");
+		}
 		printf(" CHILD: My PID is %d\n", getpid());
-		printf(" CHILD: My parent's PID is %d\n", getppid());
-		printf(" CHILD: My parent's command is %s\n", &rea);
-		execvp(rea[0], commands12); 
+		execvp(pch1[0], pch1); 
 		perror("Error exec!\n");
 		exit(1);
 	default:
 		printf("PARENT: My PID is %d\n", getpid());
-		printf("PARENT: My child's PID is %d\n", pid);
-		printf("PARENT: I'm now waiting for my child to exit()...\n");
 		wait(NULL);
-		printf("PARENT: I'm out of here\n");
 		}
 }
 	return 0;

@@ -6,4 +6,23 @@ int getMeANumber(void){
 
 
 char *commands12[] = {
-	"ls", NULL};
+	 "ls", NULL};
+	
+	/*
+{
+  char cmdline[MAXC];
+  char * pch;
+  char *pch1[];
+  int cnt=0;
+  
+  fgets(cmdline, 1001, stdin);
+  pch = strtok (cmdline," ");
+  while (pch != NULL)
+  {
+    pch1[cnt]=pch;
+    pch = strtok (NULL, " ");
+    cnt++;
+  }
+  return 0;
+}
+*/
