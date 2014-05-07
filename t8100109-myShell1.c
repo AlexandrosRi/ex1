@@ -1,14 +1,19 @@
-#include "8100109.h"
+#include "t8100109-myShell.h"
 
 
-static bool getargs(int *argcp, char *argv[], int max/*, bool *eofp*/){
+static bool getargs(int *argcp, char *argv[], int max, bool *eofp){
 	
 	static char cmd[MAXLINE];
 	char *cmdp;
 	int i=0;
 	
-	//*eofp = false;
+	*eofp = false;
 	
+	if ((getchar())== EOF){
+		*eofp = true;
+		return false;
+	}
+
 	fgets(cmd, sizeof(cmd), stdin);
 	
 	cmdp = cmd;
@@ -25,7 +30,7 @@ static bool getargs(int *argcp, char *argv[], int max/*, bool *eofp*/){
 }
 
 
-static void execut1(int argc, char *argv[]){
+static void execut1(int argc, char *argv[]){	//http://beej.us/guide/bgipc/output/print/bgipc_USLetter_2.pdf
 
 	pid_t pid;
 	
@@ -55,12 +60,15 @@ int main(void){
 	
 	char *argv[MAXARG];
 	int argc;
-	//bool eof;
+	bool eof;
 	
 	while (true) {
-		printf("myshell1 ");
-		if (getargs(&argc, argv, MAXARG) && argc > 0) {
+		printf("myshell1> ");
+		if (getargs(&argc, argv, MAXARG, &eof) && argc > 0) {
 			execut1(argc, argv);
+		}
+		if (eof){
+			exit(EXIT_SUCCESS);
 		}
 	}
 }
