@@ -6,9 +6,7 @@ static bool split_pipes(int *argcp, char *argv[], int max, bool *eofp){
 	char *cmdp;
 	int i;
 	
-	//*eofp = false;
-	
-	//fgets(cmd, sizeof(cmd), stdin);
+	*eofp = false;
 	
 	if (fgets(cmd, sizeof(cmd), stdin) == NULL){	//null sthn arxh, stamataei
 		*eofp = true;
@@ -18,7 +16,6 @@ static bool split_pipes(int *argcp, char *argv[], int max, bool *eofp){
 	cmdp = cmd;
 	
 	for(i = 0; i < max; i++) {
-		printf("%d\n", i);
 		if ((argv[i] = strtok(cmdp, "|\t\n")) == NULL)
 			break;
 		cmdp = NULL;
@@ -28,15 +25,10 @@ static bool split_pipes(int *argcp, char *argv[], int max, bool *eofp){
 	return true;
 }
 
-static bool getargs(char *part, char *argv[], int max){
+static void getargs(char *part, char *argv[], int max){
 	
-	//static char cmd[MAXLINE];
 	char *cmdp;
 	int i;
-	
-	//*eofp = false;
-	
-	//fgets(cmd, sizeof(cmd), stdin);
 	
 	cmdp = part;
 	
@@ -46,28 +38,30 @@ static bool getargs(char *part, char *argv[], int max){
 			break;
 		cmdp = NULL;
 	}
-	
-	
-	return true;
+		
+	return;
 }
 
-pid_t create_process(char *part, int pipes[2][2], int procnum)
+pid_t create_process(char *part, int pipes[2][2], int proc)
 {
 	
 	char *argv[MAXARG];	
 	pid_t pid;
 
-	if (getargs(part, argv, MAXARG)) printf("hi\n");
+	getargs(part, argv, MAXARG);
 		
-	switch(pid = fork()) {
-	case -1:
+	pid = fork();
+	
+	if (pid==-1) {
 		perror("fork"); /* something went wrong */
 		exit(1); /* parent exits */
-	case 0:
+	}
+
+	if (pid==0) {
 		printf(" CHILD: My PID is %d\n", getpid());
-//cp--------------------------------------------------------------------------------		
-		if(procnum==1){
-			printf("CHILD: procnum 1\n");
+
+		if(proc==1){
+			
 			close(pipes[0][STDIN_FILENO]);
 			dup2(pipes[0][STDOUT_FILENO], STDOUT_FILENO); 
 			close(pipes[0][STDOUT_FILENO]);
@@ -75,38 +69,23 @@ pid_t create_process(char *part, int pipes[2][2], int procnum)
 			close(pipes[1][STDOUT_FILENO]);	
 		}
 	        	
-		if(procnum==2){
-			printf("CHILD: procnum 2\n");
-			//close(pipes[1][STDOUT_FILENO]);
-			dup2(pipes[1][STDIN_FILENO], STDIN_FILENO);//printf("CHILD: procnum 2*2\n");
-			close(pipes[1][STDIN_FILENO]);//printf("CHILD: procnum 2*3\n");
-			close(pipes[0][STDIN_FILENO]);//printf("CHILD: procnum 2*4\n");
+		if(proc==2){
+			
+			close(pipes[1][STDOUT_FILENO]);
+			dup2(pipes[1][STDIN_FILENO], STDIN_FILENO);
+			close(pipes[1][STDIN_FILENO]);
+			close(pipes[0][STDIN_FILENO]);
 			close(pipes[0][STDOUT_FILENO]); 
 		}
 	
-       		// Close all pipes
-        	//if(pipes[STDIN_FILENO] >= 0) close(pipes[STDIN_FILENO]);
-        	//if(pipes[STDOUT_FILENO] >= 0) close(pipes[STDOUT_FILENO]);
-		//if(pipes[1][STDIN_FILENO] >= 0) close(pipes[1][STDIN_FILENO]);
-        	//if(pipes[1][STDOUT_FILENO] >= 0) close(pipes[1][STDOUT_FILENO]);
-//cp--------------------------------------------------------------------------------		
-		printf("CHILD: procnum 2*4 %d\n", procnum);		
 		execvp(argv[0], argv); 
-		printf("CHILD: procnum 2*5 %d\n", procnum);		
 		perror("Error exec!\n");
 		
 		exit(1);
-	/*default:
-		printf("PARENT: My PID is %d\n", getpid());
-		close(pipes[0][STDIN_FILENO]);
-        	close(pipes[0][STDOUT_FILENO]);
-		close(pipes[1][STDIN_FILENO]);
-        	close(pipes[1][STDOUT_FILENO]);
-		wait(NULL);
-		printf("PARENT: Done waiting %d\n", getpid());
-		}*/}
+	}
 	return pid;
 }
+
 static void execut3(int argc, char *parts[MAXARG]){
 	
 	pid_t children[2];
@@ -121,8 +100,8 @@ static void execut3(int argc, char *parts[MAXARG]){
 	
 	pipe(p);
 	
-	pipes[0][STDOUT_FILENO]=p[STDOUT_FILENO]; // Process N writes to the pipe
-        pipes[1][STDIN_FILENO]=p[STDIN_FILENO]; // Process N+1 reads from the pipe	
+	pipes[0][STDOUT_FILENO]=p[STDOUT_FILENO]; // Process 1 writes to the pipe
+        pipes[1][STDIN_FILENO]=p[STDIN_FILENO]; // Process 2 reads from the pipe	
 	
 	children[0] = create_process(parts[0], pipes, 1); 
 	children[1] = create_process(parts[1], pipes, 2);
@@ -132,15 +111,10 @@ static void execut3(int argc, char *parts[MAXARG]){
 	if(pipes[1][STDIN_FILENO] >= 0) close(pipes[1][STDIN_FILENO]);
         if(pipes[1][STDOUT_FILENO] >= 0) close(pipes[1][STDOUT_FILENO]);
 	
-	waitpid(children[0], &stat0, 0);
-		printf("Done waiting\n");
-                fprintf(stderr, "Child 0 returned %d\n",
-                        WEXITSTATUS(stat0));
+	printf("PARENT: My PID is %d\n", getpid());
+	waitpid(children[0], &stat0, 0);		
 	waitpid(children[1], &stat1, 0);
-		printf("Done waiting\n");
-                fprintf(stderr, "Child 1 returned %d\n",
-                        WEXITSTATUS(stat1));
-	
+		
 	return;
 }
 
@@ -148,15 +122,12 @@ int main(void){
 	
 	char *argvp[MAXARG];
 	int argc;
-	bool eof=true;
+	bool eof;
 	
 	while (true) {
 		printf("myshell3> ");
 		if (split_pipes(&argc, argvp, MAXARG, &eof) && argc > 0) {		
-			//if (getargs(&argc, argv, MAXARG) && argc > 0) {
-				printf("hi2\n");				
-				execut3(argc, argvp);
-			//}
+			execut3(argc, argvp);
 		}
 		if (eof){
 			printf("\n");			
